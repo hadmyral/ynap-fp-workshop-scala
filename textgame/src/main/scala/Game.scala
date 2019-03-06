@@ -110,7 +110,7 @@ class Game {
         || newX > size
         || newY > size) throw new Exception("Invalid direction")
 
-      Player(player.name, newX, newY)
+      player.copy(x = newX, y = newY)
     }
 
     def printWorld(): Unit =
