@@ -24,11 +24,14 @@ class Game {
     case class GameWorld(player: Player, field: Field)
   }
 
+  sealed trait GameStatus
+  object Continue extends GameStatus
+  object Stop extends GameStatus
+
   object Logic {
 
-    val enter = System.getProperty("line.separator")
+    val enter: String = System.getProperty("line.separator")
 
-    var executing        = true
     var world: GameWorld = null
 
     def initWorld(): Unit = {
@@ -43,27 +46,29 @@ class Game {
       name
     }
 
-    def gameLoop(): Unit =
-      while (executing) {
-        gameStep()
+    def gameLoop(): Unit = {
+      gameStep() match {
+        case Continue => gameLoop()
+        case Stop => ()
       }
+    }
 
-    def gameStep(): Unit = {
+    def gameStep(): GameStatus = {
       val line = readLine()
 
       if (line.length > 0) {
         val words = line.trim.toLowerCase.split("\\s+")
         words(0) match {
 
-          case "help" => {
+          case "help" =>
             printHelp()
-          }
+            Continue
 
-          case "show" => {
+          case "show" =>
             printWorld()
-          }
+            Continue
 
-          case "move" => {
+          case "move" =>
             if (words.length < 2)
               println("Missing direction")
             else {
@@ -79,18 +84,19 @@ class Game {
                 case e: Exception => println(e.getMessage)
               }
             }
-          }
+            Continue
 
-          case "quit" => {
+          case "quit" =>
             printQuit()
-            executing = false
-          }
+            Stop
 
-          case _ => {
+          case _ =>
             println("Unknown command")
-          }
+            Continue
 
         }
+      } else {
+        Continue
       }
     }
 
