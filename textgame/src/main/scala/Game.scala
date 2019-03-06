@@ -8,7 +8,7 @@ class Game {
 
   object Domain {
 
-    case class Player(name: String, var x: Int, var y: Int)
+    case class Player(name: String, x: Int, y: Int)
 
     object Player {
       def begin(name: String) = Player(name, 0, 0)
@@ -74,10 +74,10 @@ class Game {
             else {
               try {
                 words(1) match {
-                  case "up"    => move((-1, 0))
-                  case "down"  => move((1, 0))
-                  case "right" => move((0, 1))
-                  case "left"  => move((0, -1))
+                  case "up"    => world = world.copy(player = move(world.player, (-1, 0)))
+                  case "down"  => world = world.copy(player = move(world.player, (1, 0)))
+                  case "right" => world = world.copy(player = move(world.player, (0, 1)))
+                  case "left"  => world = world.copy(player = move(world.player, (0, -1)))
                   case _       => println("Unknown direction")
                 }
               } catch {
@@ -100,9 +100,9 @@ class Game {
       }
     }
 
-    def move(delta: (Int, Int)): Unit = {
-      val newX = world.player.x + delta._1
-      val newY = world.player.y + delta._2
+    def move(player: Player, delta: (Int, Int)): Player = {
+      val newX = player.x + delta._1
+      val newY = player.y + delta._2
 
       val size = world.field.grid.size - 1
       if (newX < 0
@@ -110,8 +110,7 @@ class Game {
         || newX > size
         || newY > size) throw new Exception("Invalid direction")
 
-      world.player.x = newX
-      world.player.y = newY
+      Player(player.name, newX, newY)
     }
 
     def printWorld(): Unit =
