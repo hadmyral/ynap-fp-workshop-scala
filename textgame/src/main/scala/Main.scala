@@ -1,5 +1,5 @@
 package textgame
 
 object Main extends App {
-  println("Hello!")
+  new Game().run()
 }
