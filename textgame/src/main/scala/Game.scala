@@ -31,8 +31,10 @@ class Game {
   sealed trait Command
   object Help extends Command
   object Show extends Command
-  case class Move(direction: Option[Direction]) extends Command
   object Quit extends Command
+  case class Move(direction: Direction) extends Command
+  object NoMove extends Command
+  object WrongMove extends Command
   object UnknownCommand extends Command
 
   object Command {
@@ -41,18 +43,39 @@ class Game {
       strings(0) match {
         case "help" => Help
         case "show" => Show
-        case "move" => if (strings.length < 2) Move(None) else Move(Some(Direction(strings(1))))
+        case "move" =>
+          if (strings.length < 2)
+            NoMove
+          else Direction(strings(1)) match {
+            case UnknownDirection => WrongMove
+            case a => Move(a)
+          }
         case "quit" => Quit
         case _ => UnknownCommand
       }
     }
   }
 
-  sealed trait Direction
-  object Up extends Direction
-  object Down extends Direction
-  object Left extends Direction
-  object Right extends Direction
+  sealed trait Direction {
+    val x : Int = 0
+    val y : Int = 0
+  }
+  object Up extends Direction {
+    override val x: Int = -1
+    override val y: Int = 0
+  }
+  object Down extends Direction {
+    override val x: Int = 1
+    override val y: Int = 0
+  }
+  object Left extends Direction {
+    override val x: Int = 0
+    override val y: Int = -1
+  }
+  object Right extends Direction {
+    override val x: Int = 0
+    override val y: Int = 1
+  }
   object UnknownDirection extends Direction
 
   object Direction {
@@ -103,22 +126,17 @@ class Game {
             printWorld(world)
             (Continue, world)
 
-          case Move(None) =>
+          case NoMove =>
             println("Missing direction")
             (Continue, world)
 
-          case Move(Some(direction)) =>
+          case WrongMove =>
+            println("Unknown direction")
+            (Continue, world)
+
+          case Move(direction) =>
             try {
-              val newWorld = direction match {
-                case Up    => move(world, (-1, 0))
-                case Down  => move(world, (1, 0))
-                case Right => move(world, (0, 1))
-                case Left  => move(world, (0, -1))
-                case _       =>
-                  println("Unknown direction")
-                  world
-              }
-              (Continue, newWorld)
+              (Continue, move(world, direction))
             } catch {
               case e: Exception =>
                 println(e.getMessage)
@@ -132,16 +150,15 @@ class Game {
           case UnknownCommand =>
             println("Unknown command")
             (Continue, world)
-
         }
       } else {
         (Continue, world)
       }
     }
 
-    def move(world: GameWorld, delta: (Int, Int)): GameWorld = {
-      val newX = world.player.x + delta._1
-      val newY = world.player.y + delta._2
+    def move(world: GameWorld, delta: Direction): GameWorld = {
+      val newX = world.player.x + delta.x
+      val newY = world.player.y + delta.y
 
       val size = world.field.grid.size - 1
       if (newX < 0
