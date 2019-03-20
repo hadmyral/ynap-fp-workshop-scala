@@ -79,6 +79,8 @@ class Game {
     override val y: Int = 1
   }
 
+  case class GameStepOutput(status: GameStatus, world: GameWorld)
+
   object Logic {
 
     val enter: String = System.getProperty("line.separator")
@@ -97,51 +99,51 @@ class Game {
 
     def gameLoop(world: GameWorld): Unit = {
       gameStep(world) match {
-        case (Continue, newWorld) => gameLoop(newWorld)
-        case (Stop, _) => ()
+        case GameStepOutput(Continue, newWorld) => gameLoop(newWorld)
+        case GameStepOutput(Stop, _) => ()
       }
     }
 
-    def gameStep(world: GameWorld): (GameStatus, GameWorld) = {
+    def gameStep(world: GameWorld): GameStepOutput = {
       val line = readLine()
 
       if (line.length > 0) {
         Command(line) match {
           case Help =>
             printHelp()
-            (Continue, world)
+            GameStepOutput(Continue, world)
 
           case Show =>
             printWorld(world)
-            (Continue, world)
+            GameStepOutput(Continue, world)
 
           case NoMove =>
             println("Missing direction")
-            (Continue, world)
+            GameStepOutput(Continue, world)
 
           case WrongMove =>
             println("Unknown direction")
-            (Continue, world)
+            GameStepOutput(Continue, world)
 
           case Move(direction) =>
             try {
-              (Continue, move(world, direction))
+              GameStepOutput(Continue, move(world, direction))
             } catch {
               case e: Exception =>
                 println(e.getMessage)
-                (Continue, world)
+                GameStepOutput(Continue, world)
             }
 
           case Quit =>
             printQuit(world)
-            (Stop, world)
+            GameStepOutput(Stop, world)
 
           case UnknownCommand =>
             println("Unknown command")
-            (Continue, world)
+            GameStepOutput(Continue, world)
         }
       } else {
-        (Continue, world)
+        GameStepOutput(Continue, world)
       }
     }
 
