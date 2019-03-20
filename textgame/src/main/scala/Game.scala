@@ -43,22 +43,24 @@ class Game {
       strings(0) match {
         case "help" => Help
         case "show" => Show
-        case "move" =>
-          if (strings.length < 2)
-            NoMove
-          else Direction(strings(1)) match {
-            case UnknownDirection => WrongMove
-            case a => Move(a)
-          }
+        case "move" => if (strings.length < 2) NoMove else Command.fromDirection(strings(1))
         case "quit" => Quit
         case _ => UnknownCommand
       }
     }
+
+    def fromDirection(direction: String) : Command = direction match {
+      case "up" => Move(Up)
+      case "down" => Move(Down)
+      case "left" => Move(Left)
+      case "right" => Move(Right)
+      case _ => WrongMove
+    }
   }
 
   sealed trait Direction {
-    val x : Int = 0
-    val y : Int = 0
+    val x : Int
+    val y : Int
   }
   object Up extends Direction {
     override val x: Int = -1
@@ -75,17 +77,6 @@ class Game {
   object Right extends Direction {
     override val x: Int = 0
     override val y: Int = 1
-  }
-  object UnknownDirection extends Direction
-
-  object Direction {
-    def apply(direction: String) : Direction = direction match {
-      case "up" => Up
-      case "down" => Down
-      case "left" => Left
-      case "right" => Right
-      case _ => UnknownDirection
-    }
   }
 
   object Logic {
@@ -115,9 +106,7 @@ class Game {
       val line = readLine()
 
       if (line.length > 0) {
-        val command = Command(line)
-        command match {
-
+        Command(line) match {
           case Help =>
             printHelp()
             (Continue, world)
