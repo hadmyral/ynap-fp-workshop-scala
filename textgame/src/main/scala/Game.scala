@@ -25,17 +25,17 @@ class Game {
   }
 
   sealed trait GameStatus
-  object Continue extends GameStatus
-  object Stop extends GameStatus
+  case object Continue extends GameStatus
+  case object Stop extends GameStatus
 
   sealed trait Command
-  object Help extends Command
-  object Show extends Command
-  object Quit extends Command
+  case object Help extends Command
+  case object Show extends Command
+  case object Quit extends Command
   case class Move(direction: Direction) extends Command
-  object NoMove extends Command
-  object WrongMove extends Command
-  object UnknownCommand extends Command
+  case object NoMove extends Command
+  case object WrongMove extends Command
+  case object UnknownCommand extends Command
 
   object Command {
     def apply(line: String): Command = {
@@ -62,19 +62,19 @@ class Game {
     val x : Int
     val y : Int
   }
-  object Up extends Direction {
+  case object Up extends Direction {
     override val x: Int = -1
     override val y: Int = 0
   }
-  object Down extends Direction {
+  case object Down extends Direction {
     override val x: Int = 1
     override val y: Int = 0
   }
-  object Left extends Direction {
+  case object Left extends Direction {
     override val x: Int = 0
     override val y: Int = -1
   }
-  object Right extends Direction {
+  case object Right extends Direction {
     override val x: Int = 0
     override val y: Int = 1
   }
