@@ -79,7 +79,11 @@ class Game {
     override val y: Int = 1
   }
 
-  case class GameStepOutput(status: GameStatus, world: GameWorld, message: Option[String] = None)
+  trait GameStepOutput
+
+  case class Continue(world: GameWorld) extends GameStepOutput
+  case class ContinueWithMessage(message: String) extends GameStepOutput
+  case class Stop(message: String) extends GameStepOutput
 
   object Logic {
 
@@ -100,12 +104,16 @@ class Game {
     def gameLoop(world: GameWorld): Unit = {
       val step = gameStep(world)
 
-      if (step.message.isDefined)
-        println(step.message.get)
-
       step match {
-        case GameStepOutput(Continue, newWorld, _) => gameLoop(newWorld)
-        case GameStepOutput(Stop, _, _) => ()
+        case Continue(newWorld) =>
+          gameLoop(newWorld)
+
+        case ContinueWithMessage(message) =>
+          println(message)
+          gameLoop(world)
+
+        case Stop(message) =>
+          println(message)
       }
     }
 
@@ -114,24 +122,24 @@ class Game {
 
       if (line.length > 0) {
         Command(line) match {
-          case Help => GameStepOutput(Continue, world, helpMessage())
-          case Show => GameStepOutput(Continue, world, Some(renderWorld(world)))
-          case NoMove => GameStepOutput(Continue, world, Some("Missing direction"))
-          case WrongMove => GameStepOutput(Continue, world, Some("Unknown direction"))
+          case Help => ContinueWithMessage(helpMessage())
+          case Show => ContinueWithMessage(renderWorld(world))
+          case NoMove => ContinueWithMessage("Missing direction")
+          case WrongMove => ContinueWithMessage("Unknown direction")
 
           case Move(direction) =>
             try {
-              GameStepOutput(Continue, move(world, direction))
+              Continue(move(world, direction))
             } catch {
               case e: Exception =>
-                GameStepOutput(Continue, world, Some(e.getMessage))
+                ContinueWithMessage(e.getMessage)
             }
 
-          case Quit => GameStepOutput(Stop, world, Some(s"Bye bye ${world.player.name}!"))
-          case UnknownCommand => GameStepOutput(Continue, world, Some("Unknown command"))
+          case Quit => Stop(s"Bye bye ${world.player.name}!")
+          case UnknownCommand => ContinueWithMessage("Unknown command")
         }
       } else {
-        GameStepOutput(Continue, world)
+        Continue(world)
       }
     }
 
@@ -152,8 +160,7 @@ class Game {
       )
     }
 
-    def helpMessage(): Option[String] = {
-      Some(
+    def helpMessage(): String = {
         s"""|
             |Valid commands:
             |
@@ -161,7 +168,7 @@ class Game {
             | show
             | move <up|down|left|right>
             | quit
-            |""".stripMargin)
+            |""".stripMargin
     }
 
     def renderWorld(world: GameWorld): String = {
