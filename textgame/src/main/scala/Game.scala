@@ -28,6 +28,28 @@ class Game {
   object Continue extends GameStatus
   object Stop extends GameStatus
 
+  sealed trait Command
+  object Help extends Command
+  object Show extends Command
+  case class Move(direction: Option[String]) extends Command
+  object Quit extends Command
+  object Unknown extends Command
+
+  object Command {
+    def apply(line: String): Command = {
+      val strings = line.trim.toLowerCase.split("\\s+")
+      strings(0) match {
+        case "help" => Help
+        case "show" => Show
+        case "move" =>
+          if (strings.length < 2) Move(None)
+          else Move(Some(strings(1)))
+        case "quit" => Quit
+        case _ => Unknown
+      }
+    }
+  }
+
   object Logic {
 
     val enter: String = System.getProperty("line.separator")
@@ -55,46 +77,44 @@ class Game {
       val line = readLine()
 
       if (line.length > 0) {
-        val words = line.trim.toLowerCase.split("\\s+")
-        words(0) match {
+        val command = Command(line)
+        command match {
 
-          case "help" =>
+          case Help =>
             printHelp()
             (Continue, world)
 
-          case "show" =>
+          case Show =>
             printWorld(world)
             (Continue, world)
 
-          case "move" =>
-            if (words.length < 2) {
-              println("Missing direction")
-              (Continue, world)
-            }
-            else {
-              try {
-                val newWorld = words(1) match {
-                  case "up"    => move(world, (-1, 0))
-                  case "down"  => move(world, (1, 0))
-                  case "right" => move(world, (0, 1))
-                  case "left"  => move(world, (0, -1))
-                  case _       =>
-                    println("Unknown direction")
-                    world
-                }
-                (Continue, newWorld)
-              } catch {
-                case e: Exception =>
-                  println(e.getMessage)
-                  (Continue, world)
+          case Move(None) =>
+            println("Missing direction")
+            (Continue, world)
+
+          case Move(Some(direction)) =>
+            try {
+              val newWorld = direction match {
+                case "up"    => move(world, (-1, 0))
+                case "down"  => move(world, (1, 0))
+                case "right" => move(world, (0, 1))
+                case "left"  => move(world, (0, -1))
+                case _       =>
+                  println("Unknown direction")
+                  world
               }
+              (Continue, newWorld)
+            } catch {
+              case e: Exception =>
+                println(e.getMessage)
+                (Continue, world)
             }
 
-          case "quit" =>
+          case Quit =>
             printQuit(world)
             (Stop, world)
 
-          case _ =>
+          case Unknown =>
             println("Unknown command")
             (Continue, world)
 
