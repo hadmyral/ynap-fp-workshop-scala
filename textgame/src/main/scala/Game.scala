@@ -31,9 +31,9 @@ class Game {
   sealed trait Command
   object Help extends Command
   object Show extends Command
-  case class Move(direction: Option[String]) extends Command
+  case class Move(direction: Option[Direction]) extends Command
   object Quit extends Command
-  object Unknown extends Command
+  object UnknownCommand extends Command
 
   object Command {
     def apply(line: String): Command = {
@@ -41,12 +41,27 @@ class Game {
       strings(0) match {
         case "help" => Help
         case "show" => Show
-        case "move" =>
-          if (strings.length < 2) Move(None)
-          else Move(Some(strings(1)))
+        case "move" => if (strings.length < 2) Move(None) else Move(Some(Direction(strings(1))))
         case "quit" => Quit
-        case _ => Unknown
+        case _ => UnknownCommand
       }
+    }
+  }
+
+  sealed trait Direction
+  object Up extends Direction
+  object Down extends Direction
+  object Left extends Direction
+  object Right extends Direction
+  object UnknownDirection extends Direction
+
+  object Direction {
+    def apply(direction: String) : Direction = direction match {
+      case "up" => Up
+      case "down" => Down
+      case "left" => Left
+      case "right" => Right
+      case _ => UnknownDirection
     }
   }
 
@@ -95,10 +110,10 @@ class Game {
           case Move(Some(direction)) =>
             try {
               val newWorld = direction match {
-                case "up"    => move(world, (-1, 0))
-                case "down"  => move(world, (1, 0))
-                case "right" => move(world, (0, 1))
-                case "left"  => move(world, (0, -1))
+                case Up    => move(world, (-1, 0))
+                case Down  => move(world, (1, 0))
+                case Right => move(world, (0, 1))
+                case Left  => move(world, (0, -1))
                 case _       =>
                   println("Unknown direction")
                   world
@@ -114,7 +129,7 @@ class Game {
             printQuit(world)
             (Stop, world)
 
-          case Unknown =>
+          case UnknownCommand =>
             println("Unknown command")
             (Continue, world)
 
