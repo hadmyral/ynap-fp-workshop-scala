@@ -102,44 +102,44 @@ class Game {
     }
 
     def gameLoop(world: GameWorld): Unit = {
-      val step = gameStep(world)
-
-      step match {
-        case Continue(newWorld) =>
-          gameLoop(newWorld)
-
-        case ContinueWithMessage(message) =>
-          println(message)
-          gameLoop(world)
-
-        case Stop(message) =>
-          println(message)
-      }
-    }
-
-    def gameStep(world: GameWorld): GameStepOutput = {
       val line = readLine()
 
       if (line.length > 0) {
-        Command(line) match {
-          case Help => ContinueWithMessage(helpMessage())
-          case Show => ContinueWithMessage(renderWorld(world))
-          case NoMove => ContinueWithMessage("Missing direction")
-          case WrongMove => ContinueWithMessage("Unknown direction")
+        val command = Command(line)
 
-          case Move(direction) =>
-            try {
-              Continue(move(world, direction))
-            } catch {
-              case e: Exception =>
-                ContinueWithMessage(e.getMessage)
-            }
+        val step = gameStep(command, world)
 
-          case Quit => Stop(s"Bye bye ${world.player.name}!")
-          case UnknownCommand => ContinueWithMessage("Unknown command")
+        step match {
+          case Continue(newWorld) =>
+            gameLoop(newWorld)
+
+          case ContinueWithMessage(message) =>
+            println(message)
+            gameLoop(world)
+
+          case Stop(message) =>
+            println(message)
         }
-      } else {
-        Continue(world)
+      }
+    }
+
+    def gameStep(command: Command, world: GameWorld): GameStepOutput = {
+      command match {
+        case Help => ContinueWithMessage(helpMessage())
+        case Show => ContinueWithMessage(renderWorld(world))
+        case NoMove => ContinueWithMessage("Missing direction")
+        case WrongMove => ContinueWithMessage("Unknown direction")
+
+        case Move(direction) =>
+          try {
+            Continue(move(world, direction))
+          } catch {
+            case e: Exception =>
+              ContinueWithMessage(e.getMessage)
+          }
+
+        case Quit => Stop(s"Bye bye ${world.player.name}!")
+        case UnknownCommand => ContinueWithMessage("Unknown command")
       }
     }
 
