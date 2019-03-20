@@ -101,25 +101,36 @@ class Game {
       name
     }
 
+    sealed trait Line
+    case class CommandLine(command: Command) extends Line
+    case object NoCommandLine extends Line
+
     def gameLoop(world: GameWorld): Unit = {
+      parseLine() match {
+        case CommandLine(command) => executeCommand(command, world)
+        case NoCommandLine => ()
+      }
+    }
+
+    private def parseLine(): Line = {
       val line = readLine()
+      line.length match {
+        case 0 => NoCommandLine
+        case _ => CommandLine(Command(line))
+      }
+    }
 
-      if (line.length > 0) {
-        val command = Command(line)
+    private def executeCommand(command: Command, world: GameWorld) : Unit = {
+      gameStep(command, world) match {
+        case Continue(newWorld) =>
+          gameLoop(newWorld)
 
-        val step = gameStep(command, world)
+        case ContinueWithMessage(message) =>
+          println(message)
+          gameLoop(world)
 
-        step match {
-          case Continue(newWorld) =>
-            gameLoop(newWorld)
-
-          case ContinueWithMessage(message) =>
-            println(message)
-            gameLoop(world)
-
-          case Stop(message) =>
-            println(message)
-        }
+        case Stop(message) =>
+          println(message)
       }
     }
 
