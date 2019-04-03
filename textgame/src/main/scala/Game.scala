@@ -23,7 +23,17 @@ class Game {
         Field(Vector.fill(20, 20)("-"))
     }
 
-    case class GameWorld(player: Player, field: Field)
+    case class GameWorld(player: Player, field: Field) {
+      def place(player: Player): Try[GameWorld] = {
+        val size = field.grid.size - 1
+        val position = player.position
+
+        if (position.x < 0 || position.y < 0 || position.x > size || position.y > size)
+          Failure(new Exception("Invalid direction"))
+        else
+          Success(this.copy(player = player))
+      }
+    }
   }
 
   sealed trait GameStatus
@@ -154,27 +164,14 @@ class Game {
       }
     }
 
-    def updatePosition(position: Position, delta: Direction): Position = {
-      Position(
-        position.x + delta.x,
-        position.y + delta.y
-      )
-    }
-
-    def validatePosition(position: Position, world: GameWorld): Try[Position] = {
-      val size = world.field.grid.size - 1
-
-      if (position.x < 0 || position.y < 0 || position.x > size || position.y > size)
-        Failure(new Exception("Invalid direction"))
-      else
-        Success(position)
-    }
-
     def move(world: GameWorld, delta: Direction): Try[GameWorld] = {
-      val newPosition = updatePosition(world.player.position, delta)
-
-      validatePosition(newPosition, world)
-        .map(position => world.copy(player = world.player.copy(position = position)))
+      world.place(
+        world.player.copy(position = Position(
+            world.player.position.x + delta.x,
+            world.player.position.y + delta.y
+          )
+        )
+      )
     }
 
     def helpMessage(): String = {
