@@ -1,6 +1,7 @@
 package textgame
 
 import scala.io.StdIn._
+import scala.util.{Failure, Success, Try}
 
 class Game {
   import Domain._
@@ -143,34 +144,34 @@ class Game {
         case WrongMove => ContinueWithMessage("Unknown direction")
 
         case Move(direction) =>
-          try {
-            Continue(move(world, direction))
-          } catch {
-            case e: Exception =>
-              ContinueWithMessage(e.getMessage)
-          }
+            move(world, direction) match {
+              case Success(newWorld) => Continue(newWorld)
+              case Failure(error) => ContinueWithMessage(error.getMessage)
+            }
 
         case Quit => Stop(s"Bye bye ${world.player.name}!")
         case UnknownCommand => ContinueWithMessage("Unknown command")
       }
     }
 
-    def move(world: GameWorld, delta: Direction): GameWorld = {
+    def move(world: GameWorld, delta: Direction): Try[GameWorld] = {
       val newPosition = Position(
         world.player.position.x + delta.x,
         world.player.position.y + delta.y
       )
 
       val size = world.field.grid.size - 1
-      if (newPosition.x < 0
-        || newPosition.y < 0
-        || newPosition.x > size
-        || newPosition.y > size) throw new Exception("Invalid direction")
 
-      world.copy(
-        player = world.player.copy(
-          position = newPosition)
-      )
+      if (newPosition.x < 0 || newPosition.y < 0 || newPosition.x > size || newPosition.y > size)
+        Failure(new Exception("Invalid direction"))
+      else {
+        Success(
+          world.copy(
+            player = world.player.copy(
+              position = newPosition)
+          )
+        )
+      }
     }
 
     def helpMessage(): String = {
