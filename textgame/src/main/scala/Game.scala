@@ -154,24 +154,27 @@ class Game {
       }
     }
 
-    def move(world: GameWorld, delta: Direction): Try[GameWorld] = {
-      val newPosition = Position(
-        world.player.position.x + delta.x,
-        world.player.position.y + delta.y
+    def updatePosition(position: Position, delta: Direction): Position = {
+      Position(
+        position.x + delta.x,
+        position.y + delta.y
       )
+    }
 
+    def validatePosition(position: Position, world: GameWorld): Try[Position] = {
       val size = world.field.grid.size - 1
 
-      if (newPosition.x < 0 || newPosition.y < 0 || newPosition.x > size || newPosition.y > size)
+      if (position.x < 0 || position.y < 0 || position.x > size || position.y > size)
         Failure(new Exception("Invalid direction"))
-      else {
-        Success(
-          world.copy(
-            player = world.player.copy(
-              position = newPosition)
-          )
-        )
-      }
+      else
+        Success(position)
+    }
+
+    def move(world: GameWorld, delta: Direction): Try[GameWorld] = {
+      val newPosition = updatePosition(world.player.position, delta)
+
+      validatePosition(newPosition, world)
+        .map(position => world.copy(player = world.player.copy(position = position)))
     }
 
     def helpMessage(): String = {
