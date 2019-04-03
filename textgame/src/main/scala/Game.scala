@@ -7,11 +7,12 @@ class Game {
   import Logic._
 
   object Domain {
+    case class Position(x: Int, y: Int)
 
-    case class Player(name: String, x: Int, y: Int)
+    case class Player(name: String, position: Position)
 
     object Player {
-      def begin(name: String) = Player(name, 0, 0)
+      def begin(name: String) = Player(name, Position(0, 0))
     }
 
     case class Field(grid: Vector[Vector[String]])
@@ -155,19 +156,20 @@ class Game {
     }
 
     def move(world: GameWorld, delta: Direction): GameWorld = {
-      val newX = world.player.x + delta.x
-      val newY = world.player.y + delta.y
+      val newPosition = Position(
+        world.player.position.x + delta.x,
+        world.player.position.y + delta.y
+      )
 
       val size = world.field.grid.size - 1
-      if (newX < 0
-        || newY < 0
-        || newX > size
-        || newY > size) throw new Exception("Invalid direction")
+      if (newPosition.x < 0
+        || newPosition.y < 0
+        || newPosition.x > size
+        || newPosition.y > size) throw new Exception("Invalid direction")
 
       world.copy(
         player = world.player.copy(
-          x = newX,
-          y = newY)
+          position = newPosition)
       )
     }
 
@@ -183,8 +185,8 @@ class Game {
     }
 
     def renderWorld(world: GameWorld): String = {
-      val x       = world.player.x
-      val y       = world.player.y
+      val x       = world.player.position.x
+      val y       = world.player.position.y
       val grid    = world.field.grid
       val updated = grid.updated(x, grid(x).updated(y, "x"))
 
