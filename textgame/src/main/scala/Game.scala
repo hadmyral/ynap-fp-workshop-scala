@@ -1,5 +1,7 @@
 package textgame
 
+import cats.effect.IO
+
 import scala.io.StdIn._
 import scala.util.{Failure, Success, Try}
 
@@ -118,36 +120,45 @@ class Game {
     case class CommandLine(command: Command) extends Line
     case object NoCommandLine extends Line
 
-    def gameLoop(world: GameWorld): Unit = {
-      parseLine() match {
+    def gameLoop(world: GameWorld): IO[Unit] = {
+        parseLine()
+          .flatMap(line => execute(line, world))
+    }
+
+    private def execute(line: Line, world: GameWorld): IO[Unit] = {
+      line match {
         case CommandLine(command) => executeCommand(command, world)
-        case NoCommandLine => ()
+        case NoCommandLine => IO.unit
       }
     }
 
-    private def parseLine(): Line = {
-      val line = readLine()
+    private def parseLine(): IO[Line] = {
+      readLineIO()
+        .map(line => toCommandLine(line))
+    }
+
+    private def toCommandLine(line: String): Line = {
       line.length match {
         case 0 => NoCommandLine
         case _ => CommandLine(Command(line))
       }
     }
 
-    private def executeCommand(command: Command, world: GameWorld) : Unit = {
+    private def executeCommand(command: Command, world: GameWorld) : IO[Unit] = {
       gameStep(command, world) match {
         case Continue(newWorld) =>
           gameLoop(newWorld)
 
         case ContinueWithMessage(message) =>
-          println(message)
-          gameLoop(world)
+          printLineIO(message)
+            .flatMap(_ => gameLoop(world))
 
         case ContinueWithError(message) =>
-          println(message)
-          gameLoop(world)
+          printLineIO(message)
+            .flatMap(_ => gameLoop(world))
 
         case Stop(message) =>
-          println(message)
+          printLineIO(message)
       }
     }
 
@@ -199,8 +210,11 @@ class Game {
     }
   }
 
-  def run(): Unit = {
+  def run(): IO[Unit] = {
     val world = initWorld(GameWorld(Player.begin(askName()), Field.mk20x20))
     gameLoop(world)
   }
+
+  private def printLineIO(msg: String): IO[Unit] = IO { println(msg) }
+  private def readLineIO(): IO[String] = IO { scala.io.StdIn.readLine() }
 }

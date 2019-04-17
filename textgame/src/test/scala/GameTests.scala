@@ -256,7 +256,7 @@ object GameTests extends SimpleTestSuite {
     val out   = new ByteArrayOutputStream
     Console.withIn(input) {
       Console.withOut(out) {
-        new Game().run()
+        new Game().run().unsafeRunSync()
       }
     }
     cleanup(out.toString)
