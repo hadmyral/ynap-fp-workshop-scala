@@ -157,25 +157,20 @@ class Game {
         case Show => ContinueWithMessage(renderWorld(world))
         case NoMove => ContinueWithMessage("Missing direction")
         case WrongMove => ContinueWithMessage("Unknown direction")
-
-        case Move(direction) =>
-            move(world, direction) match {
-              case Success(newWorld) => Continue(newWorld)
-              case Failure(error) => ContinueWithError(error.getMessage)
-            }
-
+        case Move(direction) => move(world, direction)
         case Quit => Stop(s"Bye bye ${world.player.name}!")
         case UnknownCommand => ContinueWithMessage("Unknown command")
       }
     }
 
-    def move(world: GameWorld, delta: Direction): Try[GameWorld] = {
+    def move(world: GameWorld, delta: Direction): GameStepOutput = {
       world.place(
         world.player.copy(position = Position(
             world.player.position.x + delta.x,
-            world.player.position.y + delta.y
-          )
-        )
+            world.player.position.y + delta.y))
+      ).fold(
+        error => ContinueWithError(error.getMessage),
+        newWorld => Continue(newWorld)
       )
     }
 
