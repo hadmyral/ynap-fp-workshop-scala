@@ -91,10 +91,11 @@ class Game {
     override val y: Int = 1
   }
 
-  trait GameStepOutput
+  sealed trait GameStepOutput
 
   case class Continue(world: GameWorld) extends GameStepOutput
   case class ContinueWithMessage(message: String) extends GameStepOutput
+  case class ContinueWithError(message: String) extends GameStepOutput
   case class Stop(message: String) extends GameStepOutput
 
   object Logic {
@@ -141,6 +142,10 @@ class Game {
           println(message)
           gameLoop(world)
 
+        case ContinueWithError(message) =>
+          println(message)
+          gameLoop(world)
+
         case Stop(message) =>
           println(message)
       }
@@ -156,7 +161,7 @@ class Game {
         case Move(direction) =>
             move(world, direction) match {
               case Success(newWorld) => Continue(newWorld)
-              case Failure(error) => ContinueWithMessage(error.getMessage)
+              case Failure(error) => ContinueWithError(error.getMessage)
             }
 
         case Quit => Stop(s"Bye bye ${world.player.name}!")
