@@ -45,7 +45,7 @@ class Game {
   case object Show extends Command
   case object Quit extends Command
   case class Move(direction: Direction) extends Command
-  case object NoMove extends Command
+  case object NoDirection extends Command
   case object WrongMove extends Command
   case object UnknownCommand extends Command
 
@@ -55,7 +55,7 @@ class Game {
       strings(0) match {
         case "help" => Help
         case "show" => Show
-        case "move" => if (strings.length < 2) NoMove else Command.fromDirection(strings(1))
+        case "move" => if (strings.length < 2) NoDirection else Command.fromDirection(strings(1))
         case "quit" => Quit
         case _ => UnknownCommand
       }
@@ -155,7 +155,7 @@ class Game {
       command match {
         case Help => ContinueWithMessage(helpMessage())
         case Show => ContinueWithMessage(renderWorld(world))
-        case NoMove => ContinueWithMessage("Missing direction")
+        case NoDirection => ContinueWithMessage("Missing direction")
         case WrongMove => ContinueWithMessage("Unknown direction")
         case Move(direction) => move(world, direction)
         case Quit => Stop(s"Bye bye ${world.player.name}!")
@@ -164,13 +164,17 @@ class Game {
     }
 
     def move(world: GameWorld, delta: Direction): GameStepOutput = {
-      world.place(
-        world.player.copy(position = Position(
-            world.player.position.x + delta.x,
-            world.player.position.y + delta.y))
-      ).fold(
-        error => ContinueWithError(error.getMessage),
-        newWorld => Continue(newWorld)
+      val player = world.player.copy(
+        position = Position(
+          world.player.position.x + delta.x,
+          world.player.position.y + delta.y
+        )
+      )
+
+      world.place(player)
+        .fold(
+          error => ContinueWithError(error.getMessage),
+          newWorld => Continue(newWorld)
       )
     }
 
