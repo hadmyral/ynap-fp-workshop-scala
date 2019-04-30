@@ -1,6 +1,6 @@
 package textgame
 
-import cats.effect.IO
+//import cats.effect.IO
 
 import scala.io.StdIn._
 import scala.util.{Failure, Success, Try}
@@ -128,12 +128,12 @@ class Game {
     private def execute(line: Line, world: GameWorld): IO[Unit] = {
       line match {
         case CommandLine(command) => executeCommand(command, world)
-        case NoCommandLine => IO.unit
+        case NoCommandLine => IO.unit()
       }
     }
 
     private def parseLine(): IO[Line] = {
-      readLineIO()
+      readIO()
         .map(line => toCommandLine(line))
     }
 
@@ -150,15 +150,15 @@ class Game {
           gameLoop(newWorld)
 
         case ContinueWithMessage(message) =>
-          printLineIO(message)
+          printIO(message)
             .flatMap(_ => gameLoop(world))
 
         case ContinueWithError(message) =>
-          printLineIO(message)
+          printIO(message)
             .flatMap(_ => gameLoop(world))
 
         case Stop(message) =>
-          printLineIO(message)
+          printIO(message)
       }
     }
 
@@ -215,6 +215,12 @@ class Game {
     gameLoop(world)
   }
 
-  private def printLineIO(msg: String): IO[Unit] = IO { println(msg) }
-  private def readLineIO(): IO[String] = IO { scala.io.StdIn.readLine() }
+  private def printIO(s: String): IO[Unit] =
+    new IO[Unit](() => println(s))
+
+  private def readIO(): IO[String] =
+    new IO[String](() => readLine())
+
+//  private def twice[A](io: IO[A]): IO[A] =
+//    io.flatMap(_ => io)
 }
