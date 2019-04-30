@@ -1,7 +1,5 @@
 package textgame
 
-//import cats.effect.IO
-
 import scala.io.StdIn._
 import scala.util.{Failure, Success, Try}
 
@@ -104,16 +102,18 @@ class Game {
 
     val enter: String = System.getProperty("line.separator")
 
-    def initWorld(world: GameWorld): GameWorld = {
-      println("Use commands to play")
-      world
+    def initWorld(world: GameWorld): IO[GameWorld] = {
+      printIO("Use commands to play")
+        .map(_ => world)
     }
 
-    def askName(): String = {
-      println("What is your name?")
-      val name = readLine().trim
-      println(s"Hello, $name, welcome to the game!")
-      name
+    def ask(question: String): IO[String] =
+      printIO(question)
+        .flatMap(_ => readIO().map(_.trim))
+
+    def askName(): IO[String] = {
+      ask("What is your name?")
+        .flatMap(cleanName => printIO(s"Hello, $cleanName, welcome to the game!") *> IO.pure(cleanName))
     }
 
     sealed trait Line
@@ -211,8 +211,11 @@ class Game {
   }
 
   def run(): IO[Unit] = {
-    val world = initWorld(GameWorld(Player.begin(askName()), Field.mk20x20))
-    gameLoop(world)
+    askName()
+      .map(name => Player.begin(name))
+      .map(player => GameWorld(player, Field.mk20x20))
+      .flatMap(gameWorld => initWorld(gameWorld))
+      .flatMap(world => gameLoop(world))
   }
 
   private def printIO(s: String): IO[Unit] =

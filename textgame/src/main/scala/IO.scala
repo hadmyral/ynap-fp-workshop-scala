@@ -7,6 +7,9 @@ class IO[A](val run: () => A) {
   def map[B](f: A => B): IO[B] =
     new IO[B] (() => f(run()))
 
+  def *>[B](other: IO[B]): IO[B] =
+    flatMap(_ => other)
+
   def attempt: IO[Either[Throwable, A]] =
     new IO[Either[Throwable, A]] (
       () => {
